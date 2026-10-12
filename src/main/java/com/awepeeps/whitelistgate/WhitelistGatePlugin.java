@@ -5,21 +5,21 @@ import com.awepeeps.whitelistgate.core.Platform;
 import com.awepeeps.whitelistgate.core.RequestBook;
 import com.awepeeps.whitelistgate.core.RequestState;
 import com.awepeeps.whitelistgate.core.SecretScrubber;
+import com.awepeeps.whitelistgate.core.WhitelistState;
 import com.awepeeps.whitelistgate.notify.DiscordWebhookNotifier;
 import com.awepeeps.whitelistgate.notify.NoopRequestNotifier;
 import com.awepeeps.whitelistgate.notify.RequestNotifier;
 import com.awepeeps.whitelistgate.notify.WebhookClient;
+import com.awepeeps.whitelistgate.notify.WebhookSecretResolver;
 import com.awepeeps.whitelistgate.storage.AuditLog;
 import com.awepeeps.whitelistgate.storage.FileRequestStore;
+import com.awepeeps.whitelistgate.storage.StoragePaths;
+import com.destroystokyo.paper.event.profile.ProfileWhitelistVerifyEvent;
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
-import java.util.Properties;
-import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,7 +33,6 @@ public final class WhitelistGatePlugin extends JavaPlugin {
     private String kickMessage;
     private boolean floodgateDetected;
     private FloodgateSupport floodgateSupport;
-    private boolean enforceReadWarningLogged;
 
     @Override
     public void onEnable() {
@@ -56,6 +55,8 @@ public final class WhitelistGatePlugin extends JavaPlugin {
         command.setTabCompleter(executor);
         getServer().getPluginManager().registerEvents(
                 new WhitelistGateListener(this), this);
+        getLogger().info("Whitelist-denial listener registered (event "
+                + ProfileWhitelistVerifyEvent.class.getName() + ").");
         getServer().getScheduler().runTaskTimer(this, approvalService::expireRequests,
                 20L, 20L * 60L);
         for (ApprovalRequest request : requestBook.pending()) {
@@ -63,20 +64,21 @@ public final class WhitelistGatePlugin extends JavaPlugin {
                     approvalService.messageIdSaved(request.requestId(), messageId));
         }
         checkWhitelistSafety();
-        if (!isWebhookConfigured()) {
-            getLogger().warning("No Discord webhook configured; requests will be stored but not sent.");
-        }
     }
 
     private void createStorage() {
-        Path directory = getDataFolder().toPath();
-        requestStore = new FileRequestStore(directory.resolve("requests.properties"),
+        // getDataFolder() is relative on Paper ("plugins/Awepeeps-Whitelist-Gate");
+        // StoragePaths absolutises it so no unguarded getParent() is ever needed.
+        Path directory = StoragePaths.dataDirectory(
+                getDataFolder() == null ? null : getDataFolder().toPath());
+        requestStore = new FileRequestStore(
+                StoragePaths.fileInDataFolder(directory, "requests.properties"),
                 (backup, cause) -> {
                     String backupName = backup == null ? "unavailable" : backup.getFileName().toString();
                     getLogger().warning("Corrupt request store was backed up as "
                             + backupName + "; starting with an empty request store.");
                 });
-        auditLog = new AuditLog(directory.resolve("decisions.log"));
+        auditLog = new AuditLog(StoragePaths.fileInDataFolder(directory, "decisions.log"));
     }
 
     private List<ApprovalRequest> loadRequests() {
@@ -102,14 +104,20 @@ public final class WhitelistGatePlugin extends JavaPlugin {
         if (notifier != null) {
             notifier.close();
         }
-        URI webhook = readWebhookUri();
-        if (webhook == null) {
+        // The resolver owns all webhook warnings so a missing file yields exactly
+        // one clear line, never a second generic warning and never an exception.
+        WebhookSecretResolver.Resolution resolution = WebhookSecretResolver.resolve(
+                getConfig().getString("secrets.webhook-environment", "WLGATE_DISCORD_WEBHOOK_URL"),
+                System::getenv,
+                getConfig().getString("secrets.webhook-file", ""),
+                getLogger());
+        if (!resolution.configured()) {
             notifier = new NoopRequestNotifier();
         } else {
             HttpClient http = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(5))
                     .build();
-            WebhookClient client = new WebhookClient(webhook, http, Duration.ofSeconds(8));
+            WebhookClient client = new WebhookClient(resolution.uri(), http, Duration.ofSeconds(8));
             notifier = new DiscordWebhookNotifier(client, getLogger(), maxPending(),
                     boundedInt("request.max-discord-messages-per-minute", 5, 1, 60));
         }
@@ -118,50 +126,20 @@ public final class WhitelistGatePlugin extends JavaPlugin {
         }
     }
 
-    private URI readWebhookUri() {
-        String environmentName = getConfig().getString(
-                "secrets.webhook-environment", "WLGATE_DISCORD_WEBHOOK_URL");
-        environmentName = environmentName == null ? "" : environmentName.trim();
-        String secret = environmentName.isEmpty() ? null : System.getenv(environmentName);
-        if (secret == null || secret.isBlank()) {
-            String file = getConfig().getString("secrets.webhook-file", "");
-            file = file == null ? "" : file.trim();
-            if (!file.isEmpty()) {
-                try {
-                    secret = Files.readString(Path.of(file)).trim();
-                } catch (IOException | RuntimeException failure) {
-                    getLogger().warning("Webhook secret file could not be read: "
-                            + SecretScrubber.safeError(failure));
-                }
-            }
-        }
-        if (secret == null || secret.isBlank()) {
-            return null;
-        }
-        try {
-            URI uri = URI.create(secret);
-            if (!WebhookClient.isDiscordWebhook(uri)) {
-                getLogger().warning("Webhook secret is not a valid HTTPS Discord webhook URL; notifications disabled.");
-                return null;
-            }
-            return uri;
-        } catch (IllegalArgumentException failure) {
-            getLogger().warning("Webhook secret is not a valid HTTPS Discord webhook URL; notifications disabled.");
-            return null;
-        }
-    }
-
     public void reloadSettings() {
-        loadConfiguration();
-        requestBook.configure(maxPending(), notificationCooldown(), deniedCooldown(), pendingTtl());
-        reloadNotifier();
-        for (ApprovalRequest request : requestBook.pending()) {
-            notifier.notifyRequest(request, messageId ->
-                    approvalService.messageIdSaved(request.requestId(), messageId));
-        }
-        checkWhitelistSafety();
-        if (!isWebhookConfigured()) {
-            getLogger().warning("No Discord webhook configured; requests will be stored but not sent.");
+        try {
+            loadConfiguration();
+            requestBook.configure(maxPending(), notificationCooldown(), deniedCooldown(), pendingTtl());
+            reloadNotifier();
+            for (ApprovalRequest request : requestBook.pending()) {
+                notifier.notifyRequest(request, messageId ->
+                        approvalService.messageIdSaved(request.requestId(), messageId));
+            }
+            checkWhitelistSafety();
+        } catch (RuntimeException failure) {
+            // A bad environment must never take the plugin down on reload.
+            getLogger().warning("Configuration reload failed: "
+                    + SecretScrubber.safeError(failure));
         }
     }
 
@@ -197,19 +175,22 @@ public final class WhitelistGatePlugin extends JavaPlugin {
         return boundedInt("request.max-pending", 100, 1, 1000);
     }
 
-    public boolean enforceWhitelist() {
-        Path propertiesPath = getDataFolder().toPath().getParent().getParent()
-                .resolve("server.properties");
-        Properties properties = new Properties();
-        try (var input = Files.newInputStream(propertiesPath)) {
-            properties.load(input);
-            return Boolean.parseBoolean(properties.getProperty("enforce-whitelist", "false"));
-        } catch (IOException failure) {
-            if (!enforceReadWarningLogged) {
-                enforceReadWarningLogged = true;
-                getLogger().warning("Could not read enforce-whitelist from server.properties.");
-            }
-            return false;
+    /**
+     * Live vanilla whitelist state from the Paper API. Never reads
+     * {@code server.properties} from a guessed path, and never throws:
+     * an unreadable state becomes {@link WhitelistState.Enforcement#UNKNOWN}.
+     */
+    public WhitelistState whitelistState() {
+        boolean whitelistEnabled;
+        try {
+            whitelistEnabled = getServer().hasWhitelist();
+        } catch (RuntimeException failure) {
+            return WhitelistState.unknown(false, SecretScrubber.safeError(failure));
+        }
+        try {
+            return WhitelistState.known(whitelistEnabled, getServer().isWhitelistEnforced());
+        } catch (RuntimeException failure) {
+            return WhitelistState.unknown(whitelistEnabled, SecretScrubber.safeError(failure));
         }
     }
 
@@ -218,10 +199,19 @@ public final class WhitelistGatePlugin extends JavaPlugin {
     }
 
     private void checkWhitelistSafety() {
-        if (!getServer().hasWhitelist() || !enforceWhitelist()) {
-            getLogger().severe("WARNING: Vanilla whitelist enforcement is not fully enabled. "
-                    + "This plugin will not change it or allow players.");
+        WhitelistState state = whitelistState();
+        if (state.fullyEnforced()) {
+            return;
         }
+        if (!state.enforcementKnown()) {
+            getLogger().warning("WARNING: Could not determine whether the vanilla whitelist is "
+                    + "enforced (" + state.detail() + "). This plugin will not change the whitelist "
+                    + "settings or allow players.");
+            return;
+        }
+        getLogger().severe("WARNING: Vanilla whitelist enforcement is not fully enabled "
+                + "(whitelist=" + state.whitelistEnabled() + ", enforce-whitelist="
+                + state.describeEnforcement() + "). This plugin will not change it or allow players.");
     }
 
     private Duration pendingTtl() {
@@ -257,8 +247,12 @@ public final class WhitelistGatePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (approvalService != null) {
-            approvalService.close();
+        try {
+            if (approvalService != null) {
+                approvalService.close();
+            }
+        } catch (RuntimeException failure) {
+            getLogger().warning("Shutdown cleanup failed: " + SecretScrubber.safeError(failure));
         }
     }
 }

@@ -19,6 +19,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Test and build
         run: ./gradlew --no-daemon clean test build
+      - name: Report jar checksum
+        shell: bash
+        run: |
+          sha256sum build/libs/awepeeps-whitelist-gate-*.jar | tee /tmp/jar-sha256.txt
+          {
+            echo "### Plugin jar SHA-256"
+            echo '```'
+            cat /tmp/jar-sha256.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload plugin jar
         uses: actions/upload-artifact@v4
         with:

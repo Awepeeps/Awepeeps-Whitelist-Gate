@@ -52,6 +52,22 @@ plugin still records requests and local commands work; it logs one startup
 warning and sends no notifications. The URL is never shown by status or
 included in logs.
 
+### Webhook startup log
+
+The plugin emits exactly one `WARN` line about the webhook at startup:
+
+- Nothing configured: `No Discord webhook configured (environment variable
+  WLGATE_DISCORD_WEBHOOK_URL is unset and secrets.webhook-file is empty)...`
+- `secrets.webhook-file` set but the file does not exist yet (the normal
+  "not supplied yet" state): `Discord webhook is not configured yet: secret file
+  /data/secrets/wlgate-webhook-url does not exist...` This names the file and
+  the environment variable, never a URL, and never disables the plugin.
+- A file that exists but is unreadable, empty, or not a Discord webhook URL
+  gets its own distinct warning.
+
+After creating the secret file, run `/wlgate reload` (or restart) to pick it up.
+
+
 ## Configuration
 
 `plugins/Awepeeps-Whitelist-Gate/config.yml` is created with these defaults:
@@ -81,9 +97,10 @@ admitted. Requests expire after the TTL. A denied identity can request again
 after the configured denial cooldown.
 
 `webhook-file` is an optional filesystem path to a mounted secret containing
-only the URL; a non-empty environment variable takes precedence. Reload with
-`/wlgate reload` after changing settings. The webhook itself is not copied to
-plugin config.
+only the URL; a non-empty environment variable takes precedence. A configured
+path whose file does not exist yet is treated as "not configured", never as an
+error. Reload with `/wlgate reload` after changing settings. The webhook itself
+is not copied to plugin config.
 
 ## Commands and permission
 
@@ -145,6 +162,8 @@ Build and test with JDK 25:
 ./gradlew --no-daemon clean test build
 ```
 
-The jar is `build/libs/awepeeps-whitelist-gate-1.0.0.jar`. See
+The jar is `build/libs/awepeeps-whitelist-gate-1.0.1.jar`. Text files are
+pinned to LF by `.gitattributes`, so the jar is byte-for-byte reproducible on
+Windows and Linux; CI prints the jar's SHA-256 in the job summary. See
 [`CHANGELOG.md`](CHANGELOG.md) and
 [`docs/discord-bot-design.md`](docs/discord-bot-design.md).
