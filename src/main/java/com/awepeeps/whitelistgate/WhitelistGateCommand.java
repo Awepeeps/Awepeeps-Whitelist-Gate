@@ -4,6 +4,7 @@ import com.awepeeps.whitelistgate.core.ApprovalRequest;
 import com.awepeeps.whitelistgate.core.RequestDecision;
 import com.awepeeps.whitelistgate.core.RequestState;
 import com.awepeeps.whitelistgate.core.TextSafety;
+import com.awepeeps.whitelistgate.core.WhitelistState;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -90,10 +91,9 @@ public final class WhitelistGateCommand implements CommandExecutor, TabCompleter
     }
 
     private void status(CommandSender sender) {
-        boolean whitelist = plugin.getServer().hasWhitelist();
-        boolean enforce = plugin.enforceWhitelist();
-        sender.sendMessage("Whitelist enabled: " + whitelist);
-        sender.sendMessage("Enforce whitelist: " + enforce);
+        WhitelistState state = plugin.whitelistState();
+        sender.sendMessage("Whitelist enabled: " + state.whitelistEnabled());
+        sender.sendMessage("Enforce whitelist: " + state.describeEnforcement());
         sender.sendMessage("Webhook configured: " + plugin.isWebhookConfiguredForStatus());
         sender.sendMessage("Floodgate detected: " + plugin.floodgateDetected());
         sender.sendMessage("Pending requests: " + plugin.requestBook().pendingCount()

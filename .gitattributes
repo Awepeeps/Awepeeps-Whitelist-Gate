@@ -1,0 +1,14 @@
+# Normalise text to LF everywhere (including on Windows checkouts) so builds
+# are byte-for-byte reproducible across operating systems.
+* text=auto eol=lf
+
+# Windows batch files must keep CRLF.
+*.bat text eol=crlf
+
+# Binary assets are never line-ending converted.
+*.jar binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.zip binary
+*.gz binary

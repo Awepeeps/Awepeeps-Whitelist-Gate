@@ -18,12 +18,14 @@ public final class AuditLog {
     private final Path path;
 
     public AuditLog(Path path) {
-        this.path = path;
+        // Absolutise once so temp-file creation never depends on a relative
+        // data folder or a null parent.
+        this.path = StoragePaths.absoluteFile(path);
     }
 
     public synchronized void append(String requestId, UUID uuid, RequestState decision,
                                     String actor, Instant timestamp) throws IOException {
-        Files.createDirectories(path.toAbsolutePath().getParent());
+        Files.createDirectories(StoragePaths.parentDirectory(path));
         String safeActor = Base64.getUrlEncoder().withoutPadding().encodeToString(
                 actor.getBytes(StandardCharsets.UTF_8));
         String line = timestamp + "\t" + requestId + "\t" + uuid + "\t"
@@ -50,7 +52,7 @@ public final class AuditLog {
         if (kept.size() > MAX_ENTRIES) {
             kept = new ArrayList<>(kept.subList(kept.size() - MAX_ENTRIES, kept.size()));
         }
-        Path temporary = Files.createTempFile(path.toAbsolutePath().getParent(),
+        Path temporary = Files.createTempFile(StoragePaths.parentDirectory(path),
                 path.getFileName().toString(), ".tmp");
         try {
             Files.write(temporary, kept, StandardCharsets.UTF_8);

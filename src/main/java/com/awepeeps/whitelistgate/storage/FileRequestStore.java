@@ -33,7 +33,9 @@ public final class FileRequestStore implements RequestStore {
     }
 
     public FileRequestStore(Path path, CorruptionHandler corruptionHandler) {
-        this.path = path;
+        // Absolutise once so every later sibling/parent lookup is defined even
+        // when the plugin's data folder is relative.
+        this.path = StoragePaths.absoluteFile(path);
         this.corruptionHandler = corruptionHandler;
     }
 
@@ -79,7 +81,7 @@ public final class FileRequestStore implements RequestStore {
 
     @Override
     public synchronized void save(List<ApprovalRequest> requests) throws IOException {
-        Path parent = path.toAbsolutePath().getParent();
+        Path parent = StoragePaths.parentDirectory(path);
         Files.createDirectories(parent);
         Properties properties = new Properties();
         properties.setProperty("format", Integer.toString(VERSION));
