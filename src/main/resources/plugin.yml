@@ -1,0 +1,16 @@
+name: Awepeeps-Whitelist-Gate
+version: '${version}'
+main: com.awepeeps.whitelistgate.WhitelistGatePlugin
+api-version: '26.3'
+description: Records vanilla whitelist denials and provides owner-controlled approval.
+authors: [Awepeeps]
+softdepend: [floodgate]
+commands:
+  wlgate:
+    description: Manage whitelist approval requests.
+    usage: /wlgate <list|approve|deny|forget|reload|status>
+    permission: wlgate.admin
+permissions:
+  wlgate.admin:
+    description: View and decide whitelist approval requests.
+    default: op

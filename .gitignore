@@ -1,0 +1,29 @@
+# Gradle build output
+.gradle/
+build/
+
+# IDEs and editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+.settings/
+.project
+.classpath
+*.swp
+
+# Local server / plugin runtime data (never commit live state)
+plugins/Awepeeps-Whitelist-Gate/
+plugins/AwepeepsWhitelistGate/
+run/
+server/
+
+# Local secrets (never commit the webhook URL)
+.env
+.env.*
+*.secret
+*.secrets
+secrets/
+webhook-url.txt

@@ -1,0 +1,17 @@
+request:
+  pending-ttl-hours: 24
+  denied-rerequest-cooldown-hours: 24
+  notification-cooldown-seconds: 300
+  max-pending: 100
+  max-discord-messages-per-minute: 5
+
+storage:
+  audit-retention-days: 90
+
+secrets:
+  webhook-environment: WLGATE_DISCORD_WEBHOOK_URL
+  # Optional path to a mounted secret file. Never put the webhook URL here.
+  webhook-file: ""
+
+messages:
+  whitelist-denied: "Your request was sent to the server owner. Please try again later."
