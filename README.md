@@ -167,3 +167,9 @@ pinned to LF by `.gitattributes`, so the jar is byte-for-byte reproducible on
 Windows and Linux; CI prints the jar's SHA-256 in the job summary. See
 [`CHANGELOG.md`](CHANGELOG.md) and
 [`docs/discord-bot-design.md`](docs/discord-bot-design.md).
+
+## Repository docs
+
+- [`AGENTS.md`](AGENTS.md) — repository-wide guidance for agents working on this plugin.
+- [`.agents/skills/whitelist-gate-notification-change/SKILL.md`](.agents/skills/whitelist-gate-notification-change/SKILL.md)
+  — the notification/decision change workflow.
