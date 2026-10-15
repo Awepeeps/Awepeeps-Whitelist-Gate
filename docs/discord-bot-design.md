@@ -1,19 +1,24 @@
-# Phase 2: Discord bot approval channel
+# Historical proposal: Discord bot approval channel
 
-Phase 1 deliberately uses an incoming webhook only for outbound notifications.
-The `RequestNotifier` interface and `ApprovalService.decide(...)` method are the
-extension seam: a future bot implementation can replace or complement the
-webhook notifier, and every approval still goes through the same state check,
-audit write, and main-thread Paper whitelist mutation.
+This document records an earlier design idea only. It is not an active roadmap
+or implementation plan. New server setups use owner-reviewed Paper and
+Floodgate native whitelist commands; they require no custom Discord bot,
+webhook, or account-linking integration. Runtime removal of the existing Gate
+plugin remains pending an isolated test and owner confirmation.
 
-The future bot must use an outbound Discord Gateway connection only; it must
-not open an inbound listener. It needs no privileged intents. Use buttons whose
-custom IDs contain only an opaque request ID, not a player name or UUID. On
-every click, verify the configured guild and channel, then check the clicker's
-allowed user ID or moderator role ID before calling the shared decision
-service. Reject expired, already-decided, unknown, or replayed request IDs.
+The historical plugin used an incoming webhook only for outbound
+notifications. Its `RequestNotifier` interface and
+`ApprovalService.decide(...)` method remain in the source as a possible extension
+seam, but no bot implementation is currently planned.
 
-Grant the bot only View Channel, Send Messages, and Embed Links in the private
-approval channel. Add Read Message History only if the chosen implementation
-demonstrably needs it. Do not grant administrator, Manage Server, or any
-console-command access. Keep bot credentials outside config and source control.
+If this proposal is revisited, any bot would need to use an outbound Discord
+Gateway connection only and avoid an inbound listener. It would need no
+privileged intents. Buttons should contain only an opaque request ID, not a
+player name or UUID. Each click would need guild/channel and user/role checks
+before calling the shared decision service, which should reject expired,
+already-decided, unknown, or replayed request IDs.
+
+Any future implementation should grant only View Channel, Send Messages, and
+Embed Links in its approval channel, with Read Message History only if needed.
+It should not receive administrator, Manage Server, or console-command access;
+credentials must stay outside config and source control.

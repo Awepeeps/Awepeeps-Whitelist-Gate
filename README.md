@@ -1,5 +1,23 @@
 # Awepeeps Whitelist Gate
 
+## Status: retained historical plugin
+
+This repository preserves the plugin source and its recovery/build record. The
+new default server setup uses owner-reviewed manual approval through Paper's
+native `whitelist` command for Java players and Floodgate's `/fwhitelist` for
+Bedrock players; it does not require this plugin or any Discord integration.
+Do not add the Gate to new installs by default.
+
+Removal from the existing runtime is **pending an isolated test and owner
+confirmation**. Until that check is recorded, this repository does not claim the
+plugin is absent from the running server. Retain the source and existing private
+backup data for recovery until the runtime retirement is confirmed.
+
+The old Discord bot design below is historical context, not active planned work.
+No new bot or Discord-based approval workflow is part of the default setup. Any
+existing runtime notification state remains subject to the pending retirement
+check.
+
 A small Paper plugin that observes **Paper's own whitelist denials**, keeps a
 bounded pending-request queue, and sends a Discord incoming-webhook notice.
 An operator approves or denies locally with `/wlgate`; approval adds the
