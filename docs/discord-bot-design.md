@@ -4,7 +4,8 @@ This document records an earlier design idea only. It is not an active roadmap
 or implementation plan. New server setups use owner-reviewed Paper and
 Floodgate native whitelist commands; they require no custom Discord bot,
 webhook, or account-linking integration. Runtime removal of the existing Gate
-plugin remains pending an isolated test and owner confirmation.
+plugin remains pending an isolated compatibility check and guarded zero-player
+maintenance.
 
 The historical plugin used an incoming webhook only for outbound
 notifications. Its `RequestNotifier` interface and

@@ -8,10 +8,11 @@ native `whitelist` command for Java players and Floodgate's `/fwhitelist` for
 Bedrock players; it does not require this plugin or any Discord integration.
 Do not add the Gate to new installs by default.
 
-Removal from the existing runtime is **pending an isolated test and owner
-confirmation**. Until that check is recorded, this repository does not claim the
-plugin is absent from the running server. Retain the source and existing private
-backup data for recovery until the runtime retirement is confirmed.
+Removal from the existing runtime is **pending an isolated compatibility check
+and guarded zero-player maintenance**. Until that work is recorded, this
+repository does not claim the plugin is absent from the running server. Retain
+the source and existing private backup data for recovery until runtime retirement
+is complete.
 
 The old Discord bot design below is historical context, not active planned work.
 No new bot or Discord-based approval workflow is part of the default setup. Any
