@@ -18,9 +18,10 @@ source for historical reference and recovery; this records staging removal, not
 source deletion or a live-season cutover.
 
 The staging check found two Gate data files and no per-user identity files. One
-properties file differed only in comments/formatting; its non-comment lines
-matched the pre-change copy. This does not claim that legacy request state was
-deleted. Runtime notification state is not part of the active approval flow.
+file was unchanged; the properties file differed only in comments/formatting,
+with all non-comment lines matching the pre-change copy. This does not claim
+that legacy request state was deleted. Runtime notification state is not part
+of the active approval flow.
 
 The old Discord bot design below is historical context, not active planned work.
 No new bot or Discord-based approval workflow is part of the default setup. The
