@@ -19,6 +19,8 @@ No new bot or Discord-based approval workflow is part of the default setup. Any
 existing runtime notification state remains subject to the pending retirement
 check.
 
+## Historical plugin and recovery reference — not a new-install guide
+
 A small Paper plugin that observes **Paper's own whitelist denials**, keeps a
 bounded pending-request queue, and sends a Discord incoming-webhook notice.
 An operator approves or denies locally with `/wlgate`; approval adds the
