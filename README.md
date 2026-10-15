@@ -1,6 +1,6 @@
 # Awepeeps Whitelist Gate
 
-## Status: retained historical plugin
+## Status: removed from staging; source and recovery data retained
 
 This repository preserves the plugin source and its recovery/build record. The
 new default server setup uses owner-reviewed manual approval through Paper's
@@ -8,16 +8,24 @@ native `whitelist` command for Java players and Floodgate's `/fwhitelist` for
 Bedrock players; it does not require this plugin or any Discord integration.
 Do not add the Gate to new installs by default.
 
-Removal from the existing runtime is **pending an isolated compatibility check
-and guarded zero-player maintenance**. Until that work is recorded, this
-repository does not claim the plugin is absent from the running server. Retain
-the source and existing private backup data for recovery until runtime retirement
-is complete.
+On 2026-10-15, the plugin was removed from the staging runtime during guarded
+zero-player maintenance after an isolated compatibility/recovery rehearsal. The
+managed service recovered cleanly, and the plugin was absent after restart.
+Paper's native whitelist and Floodgate's `/fwhitelist` remain the access gates;
+owners review denials and approve manually. A private recovery copy of Gate data
+and the pre-change archive are retained. The repository preserves the plugin
+source for historical reference and recovery; this records staging removal, not
+source deletion or a live-season cutover.
+
+The staging check found two Gate data files and no per-user identity files. One
+properties file differed only in comments/formatting; its non-comment lines
+matched the pre-change copy. This does not claim that legacy request state was
+deleted. Runtime notification state is not part of the active approval flow.
 
 The old Discord bot design below is historical context, not active planned work.
-No new bot or Discord-based approval workflow is part of the default setup. Any
-existing runtime notification state remains subject to the pending retirement
-check.
+No new bot or Discord-based approval workflow is part of the default setup. The
+retired staging plugin's local data was retained in the private recovery copy;
+no active runtime notification workflow remains.
 
 ## Historical plugin and recovery reference — not a new-install guide
 
