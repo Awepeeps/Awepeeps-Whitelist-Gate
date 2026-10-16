@@ -1,5 +1,15 @@
 # Awepeeps Whitelist Gate
 
+> **Retired (2026-10-16). This plugin is no longer maintained or used.** The
+> Awepeeps server now uses the plain Paper/Floodgate whitelist plus
+> [DiscordSRV](https://github.com/DiscordSRV/DiscordSRV) for whitelist-request
+> notifications and approvals: a DiscordSRV `alerts.yml` alert posts denied
+> logins (`PlayerLoginEvent` with result `KICK_WHITELIST`) to a private staff
+> channel, and the owner approves from a restricted DiscordSRV console channel
+> limited to `whitelist`/`fwhitelist` commands. A maintained, widely used plugin
+> replaces this custom duplicate of Paper's own whitelist handling. The code is
+> kept public for reference only; do not install it.
+
 ## Status: removed from staging; source and recovery data retained
 
 This repository preserves the plugin source and its recovery/build record. The
@@ -52,7 +62,10 @@ The `RequestNotifier` interface and shared decision service leave a narrow
 seam for the separately documented future bot; no bot, JDA, inbound listener,
 analytics, update checker, or shaded dependency is included now.
 
-## Requirements and setup
+## Requirements and setup (historical — do not install)
+
+The steps below are kept only to describe how the retired plugin was once built
+and configured; they are not current setup instructions.
 
 - Paper 26.3 on Java 25.
 - Floodgate is optional. When present, the plugin checks Floodgate's
