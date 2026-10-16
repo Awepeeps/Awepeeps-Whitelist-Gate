@@ -1,5 +1,14 @@
 # Changelog
 
+## Retired — 2026-10-16
+
+- Retired: the Awepeeps server now uses the plain Paper/Floodgate whitelist plus
+  [DiscordSRV](https://github.com/DiscordSRV/DiscordSRV) for whitelist-request
+  notifications and approvals. A maintained, widely used plugin replaces this
+  custom duplicate of Paper's own whitelist handling; the code is kept public for
+  reference only and should not be installed. No code changes; the plugin
+  version is unchanged.
+
 ## 1.0.1
 
 - Fix a crash-on-enable NullPointerException: whitelist enforcement is now read
